@@ -1,4 +1,3 @@
-# imports
 import numpy as np
 import cv2
 import os
@@ -6,17 +5,14 @@ import pickle
 import imagePreprocessingUtils as ipu
 
 CAPTURE_FLAG = False
-
 class_labels = ipu.get_labels()
-
 
 def recognise(cluster_model, classify_model):
     global CAPTURE_FLAG
     gestures = ipu.get_all_gestures()
     cv2.imwrite("all_gestures.jpg", gestures)
     camera = cv2.VideoCapture(0)
-    print(
-        'Now camera window will be open, then \n1) Place your hand gesture in ROI (rectangle) \n2) Press esc key to exit.')
+    print('Starting...')
     count = 0
     while (True):
         (t, frame) = camera.read()
@@ -49,10 +45,8 @@ def recognise(cluster_model, classify_model):
                 label = class_labels[pred[0]]
                 rectangle_bgr = (0, 0, 0)
                 (text_width, text_height) = cv2.getTextSize('Predicted text:      ', 1, fontScale=1.5, thickness=2)[0]
-                # set the text start position
                 text_offset_x = 50
                 text_offset_y = 20
-                # make the coords of the box with a small padding of two pixels
                 box_coords = (
                 (text_offset_x, text_offset_y), (text_offset_x + text_width + 40, text_offset_y + text_height + 50))
                 cv2.rectangle(frame, box_coords[0], box_coords[1], rectangle_bgr, cv2.FILLED)
