@@ -1,4 +1,3 @@
-# imports
 import numpy as np
 import cv2
 import os
@@ -11,11 +10,8 @@ import random
 import pickle
 import imagePreprocessingUtils as ipu
 
-# import glob
-
 train_labels = []
 test_labels = []
-
 
 def preprocess_all_images():
     images_labels = []
@@ -25,7 +21,7 @@ def preprocess_all_images():
     train_img_disc = []
     test_img_disc = []
     label_value = 0
-    MAX_IMAGES_PER_LABEL = 1200  # Setting the limit for number of images per label
+    MAX_IMAGES_PER_LABEL = 1200
 
     for (dirpath, dirnames, filenames) in os.walk(ipu.PATH):
         dirnames.sort()
@@ -44,12 +40,12 @@ def preprocess_all_images():
                             if sift_disc is not None:
                                 print(sift_disc.shape)
                                 if count < (ipu.TOTAL_IMAGES * ipu.TRAIN_FACTOR * 0.01):
-                                    print('Train:--------- Label is {} and Count is {}'.format(label, count))
+                                    print('Train: {} -> {}'.format(label, count))
                                     train_img_disc.append(sift_disc)
                                     all_train_dis.extend(sift_disc)
                                     train_labels.append(label_value)
                                 elif (count >= (ipu.TOTAL_IMAGES * ipu.TRAIN_FACTOR * 0.01)) and count < ipu.TOTAL_IMAGES:
-                                    print('Test:--------- Label is {} and Count is {}'.format(label, count))
+                                    print('Test: {} -> {}'.format(label, count))
                                     test_img_disc.append(sift_disc)
                                     test_labels.append(label_value)
                             else:
@@ -57,9 +53,9 @@ def preprocess_all_images():
                             count += 1
                 label_value += 1
 
-    print('length of train features are %i' % len(train_img_disc))
-    print('length of test features are %i' % len(test_img_disc))
-    print('length of all train descriptors is {}'.format(len(all_train_dis)))
+    print('Number of features in train dataset : %i' % len(train_img_disc))
+    print('Number of features in test dataset : %i' % len(test_img_disc))
+    print('Total number of descriptors in the training set : {}'.format(len(all_train_dis)))
 
     return all_train_dis, train_img_disc, train_disc_by_class, test_disc_by_class, test_img_disc
 
@@ -93,17 +89,6 @@ def get_SIFT_descriptors(canny):
     kp, des = sift.detectAndCompute(canny,None)
     return des
 
-
-### K-means is not used as data is large and requires a better computer with good specifications
-def kmeans(k, descriptor_list):
-    print('K-Means started.')
-    print('%i descriptors before clustering' % descriptor_list.shape[0])
-    kmeanss = KMeans(k)
-    kmeanss.fit(descriptor_list)
-    visual_words = kmeanss.cluster_centers_
-    return visual_words, kmeanss
-
-
 def mini_kmeans(k, descriptor_list):
     print('Mini batch K-Means started.')
     print('%i descriptors before clustering' % descriptor_list.shape[0])
@@ -123,18 +108,6 @@ def get_histograms(discriptors_by_class, visual_words, cluster_model):
         histograms = []
         #    loop for all images
         for each_image_discriptors in images_discriptors:
-            ## manual method to calculate words occurence as histograms
-            '''histogram = np.zeros(len(visual_words))
-            # loop for all discriptors in a image discriptorss 
-            for each_discriptor in each_image_discriptors:
-                #list_words = visual_words.tolist()
-                a = np.array([visual_words])
-                index = find_index(each_discriptor, visual_words)
-                #print(index)
-                #del list_words
-                histogram[index] += 1
-            print(histogram)'''
-
             ## using cluster model
             raw_words = cluster_model.predict(each_image_discriptors)
             hist = np.bincount(raw_words, minlength=len(visual_words))
@@ -181,11 +154,10 @@ def calculate_metrics(method, label_test, label_pred):
     print("Recall score for ", method, skmetrics.recall_score(label_test, label_pred, average='micro'))
 
 
-### STEP:1 SIFT discriptors for all train and test images with class seperation
-
+### STEP:1 SIFT discriptors for all train and test images with class separation
 all_train_dis, train_img_disc, train_disc_by_class, test_disc_by_class, test_img_disc = preprocess_all_images()
 
-##  deleting these variables as they are not used with mini batch k means
+##  Remove these variables since they are unnecessary for the mini-batch k-means algorithm
 del train_disc_by_class, test_disc_by_class
 
 ### STEP:2 MINI K-MEANS
@@ -205,7 +177,6 @@ test_images_visual_words = [mini_kmeans_model.predict(visual_words) for visual_w
 print('Visual words for test data collected. length is %i' % len(test_images_visual_words))
 
 ### STEP:3 HISTOGRAMS (findiing the occurence of each visual word of images in total words)
-## Can be calculated using get_histograms function also manually
 
 print('Calculating Histograms for train...')
 bovw_train_histograms = np.array(
@@ -228,36 +199,6 @@ X_train = bovw_train_histograms
 X_test = bovw_test_histograms
 Y_train = train_labels
 Y_test = test_labels
-
-# print(Y_train)
-### shuffling
-
-# buffer = list(zip(X_train, Y_train))
-# random.shuffle(buffer)
-# random.shuffle(buffer)
-# random.shuffle(buffer)
-# X_train, Y_train = zip(*buffer)
-# # print(Y_train)
-#
-# buffer = list(zip(X_test, Y_test))
-# random.shuffle(buffer)
-# random.shuffle(buffer)
-# if buffer:
-#     X_test, Y_test = zip(*buffer)
-# else:
-#     print("Buffer is empty!")
-#
-# print('Length of X-train:  %i ' % len(X_train))
-# print('Length of Y-train:  %i ' % len(Y_train))
-# print('Length of X-test:  %i ' % len(X_test))
-# print('Length of Y-test:  %i ' % len(Y_test))
-#
-# if len(X_test) > 0 and len(Y_test) > 0:
-#     predict_svm(X_train, X_test, Y_train, Y_test)
-# else:
-#     print("X_test or Y_test is empty!")
-#
-# predict_svm(X_train, X_test, Y_train, Y_test)
 
 if len(X_test) == 0 or len(Y_test) == 0:
     print("X_test or Y_test is empty!")
