@@ -6,26 +6,14 @@ import pickle
 from imutils import paths
 from scipy.spatial import distance
 
-# PATH or folder name of dataset
 PATH = 'Indian'
-# Train and test factor. 80% is used for training. 20% for testing.
 TRAIN_FACTOR = 80
-# please reduce TOTAL_IMAGES value to 800 or less if you are facing memory issues.
 TOTAL_IMAGES = 1200
-# Total number of classes to be classified
 N_CLASSES = 35
-# clustering factor
 CLUSTER_FACTOR = 8
 
-# START and END are rectangle coordinates (ROI) which is displayed on camera frame. Please use them accordingly based on your system.
-# mac
-# START = (450,75)
-# END = (800,425)
-##
-# windows
 START = (300, 75)
 END = (600, 400)
-##
 IMG_SIZE = 128
 
 
@@ -39,13 +27,13 @@ def get_canny_edge(image):
     upperBoundary = np.array([43, 255, 254], dtype="uint8")
     skinMask = cv2.inRange(HSVImaage, lowerBoundary, upperBoundary)
 
-    # blurring of gray scale using medianBlur
+    # Blurring of gray scale using medianBlur
     skinMask = cv2.addWeighted(skinMask, 0.5, skinMask, 0.5, 0.0)
     skinMask = cv2.medianBlur(skinMask, 5)
     skin = cv2.bitwise_and(grayImage, grayImage, mask=skinMask)
     # cv2.imshow("masked2",skin)
 
-    # . canny edge detection
+    # Canny edge detection
     canny = cv2.Canny(skin, 60, 60)
     # plt.imshow(img2, cmap = 'gray')
     return canny, skin
@@ -54,10 +42,8 @@ def get_canny_edge(image):
 def get_SIFT_descriptors(canny):
     # Initializing SIFT
     sift = cv2.SIFT_create()
-
     # Resizing the image
     canny = cv2.resize(canny, (256, 256))
-
     # Computing SIFT descriptors
     kp, des = sift.detectAndCompute(canny, None)
     return des
@@ -110,15 +96,6 @@ def get_all_gestures():
 
     print('length of gestures {}'.format(len(gestures)))
     im_tile = concat_tile(gestures, (5, 7))
-    # im_tile = concat_tile(gestures, (2, 2))
-
-    ''' im_tile = concat_tile([[gestures[0], gestures[1], gestures[2], gestures[3], gestures[4]],
-                           [gestures[5], gestures[6], gestures[7], gestures[8], gestures[9]],
-                           [gestures[10], gestures[11], gestures[12], gestures[13], gestures[14]],
-                           [gestures[15], gestures[16], gestures[17], gestures[18], gestures[19]],
-                           [gestures[20], gestures[21], gestures[22], gestures[23], gestures[24]],
-                           [gestures[25], gestures[26], gestures[27], gestures[28], gestures[29]],
-                           [gestures[30], gestures[31], gestures[32], gestures[33], gestures[34]]])'''
     return im_tile
 
 
